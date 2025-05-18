@@ -114,7 +114,7 @@ mutmut run
 
 ## Asistență AI
 
-A fost utilizat ChatGPT [5] pentru a oferi suport în construirea documentației.
+A fost utilizat `ChatGPT` [5] pentru a oferi suport în construirea documentației.
 
 ---
 
