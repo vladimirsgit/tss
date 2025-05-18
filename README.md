@@ -103,8 +103,6 @@ mutmut run
 
 ---
 
----
-
 ## Diagramă clasă
 
 ![code2flow_pxmJSB.png](images/code2flow_pxmJSB.png)
