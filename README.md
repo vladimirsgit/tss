@@ -109,7 +109,7 @@ mutmut run
 
 ![code2flow_pxmJSB.png](images/code2flow_pxmJSB.png)
 
-* A fost utilizat `code2flow` [4] pentru generarea diagramei.
+A fost utilizat `code2flow` [4] pentru generarea diagramei.
 ---
 
 ## Asistență AI
