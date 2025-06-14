@@ -255,11 +255,12 @@ Testele scrise oferă acoperire 100% la nivel de condiții, decizii și instruc�
 A fost utilizat `coverage` [3] pentru testarea acoperirii.
 
 ```
-coverage run -m pytest
-coverage html
+
+ pytest --cov=EventManager --cov-branch --cov-report=term --cov-report=html .\test_event_manager.py  
+ 
 ```
 
-![img.png](images/coverage_report.png)
+![coverage_report.png](images/coverage_report.png)
 
 ---
 
