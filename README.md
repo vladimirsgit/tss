@@ -17,7 +17,8 @@ Testele sunt scrise folosind `pytest` [1] și acoperă:
 ```
 - EventManager.py        # clasa testată
 - test_event_manager.py  # teste unitare
-- test_event_manager_chatgpt.py # teste unitare AI
+- test_event_manager_chatgpt_detailed_prompt.py # teste unitare AI folosind un prompt detaliat
+- test_event_manager_chatgpt_simple_prompt.py # teste unitare AI folosind un prompt simplu
 - README.md              # documentație
 ```
 
@@ -251,6 +252,13 @@ Testele scrise oferă acoperire 100% la nivel de condiții, decizii și instruc�
 
 **RAPORT COVERAGE**
 
+A fost utilizat `coverage` [3] pentru testarea acoperirii.
+
+```
+coverage run -m pytest
+coverage html
+```
+
 ![img.png](images/coverage_report.png)
 
 ---
@@ -272,17 +280,6 @@ pytest
 
 ---
 
-## Testare acoperire cod
-
-A fost utilizat `coverage` [3] pentru testarea acoperirii.
-
-```
-coverage run -m pytest
-coverage html
-```
-
-![img_2.png](images/img_2.png)
-
 ---
 ## Mutation Testing
 Tool: `mutmut`
@@ -296,7 +293,7 @@ mutmut run
 ```
 
 ### Rezultat:
-```bash
+```
 ⠹ Generating mutants
     done in 1ms
 ⠦ Listing all tests
@@ -334,20 +331,49 @@ deoarece ne asigurăm că răspunsul este unul negativ, nu pozitiv, în cazul î
 
 ## Raport AI
 
+Pentru a analiza capacitățile inteligenței artificiale în creare de teste unitare, utilizăm două prompt-uri.
 
+### 1. Prompt simplu
+
+![gpt_simple_prompt.png](images/gpt_simple_prompt.png)
+
+În cazul în care ChatGPT primește un prompt simplu da cel din imagine, acesta ne oferă 10 teste, care au un coverage de 90%. Ratează două instrucțiuni (_miss_) și acoperă numai parțial patru ramuri (_BrPart_).
+
+![gpt_simple_prompt.png](images/gpt_simple_prompt.png)
 
 ---
 
+![gpt_simple_prompt_coverage.png](images/gpt_simple_prompt_coverage.png)
+
+---
+
+În cazul unui prompt detailiat cu cerința proiectului,  acesta ne ofera 16 teste, cu cu un coverage de 100%.
+
+![gpt_detailed_prompt.png](images/gpt_detailed_prompt.png)
+
+---
+
+![gpt_detailed_prompt_coverage.png](images/gpt_detailed_prompt_coverage.png)
+
+---
+
+În ciuda acoperirii de 100% cu ajutorul prompt-ului detailiat, poate fi observat în fișierul  `test_event_manager_chatgpt_detailed_prompt.py` cum în cazul metodelor _has_conflict_ nu există acoperire completă la nivel de condiție (nu sunt testate de exemplu tipurile greșite pentru parametri datetime).
+
+Metodele de testat nu sunt complicate, însă, în cazul unei metode mai complicate, putem extrapola că ChatGPT ar fi ratat anumite condiții mai importante. Condițiile de tip isinstance ar fi ajuns mai departe în cod să fi ridicat erori, astfel, tipul datelor trebuie testat.
+
+Mai mult de atât, ChatGPT oferă o acoperire egală cu a noastră, printr-un număr mult mai mic de teste (16). Cu toate acestea, noi avem un număr ridicat de teste pentru scop didactic, pentru a avea acoperire completă la nivel de condiții și pentru a ilustra diferitele tipuri de testare în diferite cazuri. Desigur, tipul de testare utilizat poate fi ales în funcție de necesitățile clasei testate și de fluxul metodelor.
+
+
 ## Referințe
 
-[1] Pytest, Documentație oficială, https://docs.pytest.org/en/7.0.x/, Data ultimei accesări: 18 mai 2025
+[1] Pytest, Documentație oficială, https://docs.pytest.org/en/7.0.x/, Data ultimei accesări: 14 mai 2025
 
-[2] Mutmut, Documentație oficială, https://mutmut.readthedocs.io/en/latest/, Data ultimei accesări: 18 mai 2025
+[2] Mutmut, Documentație oficială, https://mutmut.readthedocs.io/en/latest/, Data ultimei accesări: 14 mai 2025
 
-[3] Coverage, Documentație oficială, https://coverage.readthedocs.io/en/7.8.0/, Data ultimei accesări: 18 mai 2025
+[3] Coverage, Documentație oficială, https://coverage.readthedocs.io/en/7.8.0/, Data ultimei accesări: 14 mai 2025
 
-[4] Code2Flow, Aplicație generare diagrame, https://app.code2flow.com/, Data ultimei accesări: 18 mai 2025
+[4] Draw.io, Aplicație generare diagrame, https://app.diagrams.net/, Data ultimei accesări: 14 mai 2025
 
-[5] OpenAI, ChatGPT, https://chatgpt.com/, Data generării: 18 mai 2025
+[5] OpenAI, ChatGPT, https://chatgpt.com/, Data generării: 14 mai 2025
 
 ---
