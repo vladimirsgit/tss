@@ -8,6 +8,7 @@ Testele sunt scrise folosind `pytest` [1] și acoperă:
 * Analiza valorilor de frontieră
 * Acoperire la nivel de instrucțiune, decizie, condiție
 * Mutation testing cu `mutmut` [2]
+* Raport AI
 
 ---
 
@@ -16,6 +17,7 @@ Testele sunt scrise folosind `pytest` [1] și acoperă:
 ```
 - EventManager.py        # clasa testată
 - test_event_manager.py  # teste unitare
+- test_event_manager_chatgpt.py # teste unitare AI
 - README.md              # documentație
 ```
 
@@ -23,37 +25,233 @@ Testele sunt scrise folosind `pytest` [1] și acoperă:
 
 ### Metode:
 
-* `add_event(event_name, start_datetime, end_datetime) -> bool`
-* `get_events_in_range(range_start, range_end) -> List`
-* `has_conflict(start_datetime, end_datetime) -> bool`
+* `add_event(event_name: str, start_datetime: datetime, end_datetime: datetime) -> bool`
+* `get_events_in_range(range_start: datetime, range_end: datetime) -> List`
+* `has_conflict(start_datetime: datetime, end_datetime: datetime) -> bool`
+* `get_event(event_name: str, detailed: bool) -> Union[Dict, bool]`
 
-## Strategii de testare aplicate
+### Funcționalitățile clasei:
 
-### 1. Partiționare în clase de echivalență
+---
+#### ADD EVENT
 
-* Valid/Invalid: tipuri greșite, date imposibile, string gol etc.
+
+```python  
+def add_event(self, event_name: str, start_datetime: datetime, end_datetime: datetime) -> bool:
+``` 
+
+Metoda _add_event_ returnează o valoare bool și primește trei parametri:
+
+* _event_name_: numele evenimentului ce se cere a fi adăugat
+* _start_datetime_: data și ora de start a evenimentului
+* _end_datetime_: data și ora de finalizare a evenimentului
+
+Toți parametri sunt validați în funcție de tipul de date cerut. În plus, _event_name_ trebuie să nu fie gol, iar _start_datetime_ trebuie să nu fie după _end_datetime_, dar nici înaintea timpului prezent.
+
+![add_event_graph.png](images/add_event_graph.drawio.png)
+
+---
+
+#### GET EVENTS IN RANGE
+```python  
+def get_events_in_range(self, range_start: datetime, range_end: datetime) -> List:
+``` 
+Metoda _get_events_in_range_ returnează o listă și primește doi parametri:
+
+* _range_start_: data de start a intervalului pentru care sunt căutate evenimente
+* _range_end_: data de sfârșit a intervalului pentru care sunt căutate evenimente
+
+Toți parametri sunt validați în funcție de tipul de date cerut. Timpul de start trebuie să fie înaintea timpului de sfârșit. Dacă timpul de start a unui eveniment este după punctul minim al intervalului, iar timpul de finalizare a evenimentului este înaintea punctului maxim al intervalului, evenimentul este adăugat în lista finală.
+
+![get_events_in_range_graph.png](images/get_events_in_range.drawio.png)
+
+---
+
+### HAS CONFLICT
+```python  
+def has_conflict(self, start_datetime: datetime, end_datetime: datetime) -> bool:
+``` 
+Metoda _get_events_in_range_ returnează o valoare bool și primește doi parametri:
+
+* _start_datetime_: data de start a intervalului pentru care sunt căutate evenimente
+* _end_datetime_: data de sfârșit a intervalului pentru care sunt căutate evenimente
+
+Toți parametri sunt validați în funcție de tipul de date cerut. Timpul de start trebuie să fie înaintea timpului de sfârșit. Dacă timpul de start a unui eveniment este după punctul minim al intervalului, iar timpul de finalizare a evenimentului este înaintea punctului maxim al intervalului, se returnează True, adică există conflict.
+
+![has_conflict_graph.png](images/has_conflict_graph.drawio.png)
+
+---
+
+
+### GET EVENT
+```python  
+def get_event(self, event_name: str, detailed: bool) -> Union[Dict, bool]:
+``` 
+Metoda _get_event_ returnează fie o valoare bool, fie un eveniment detaliat, și primește doi parametri:
+
+* _event_name_: numele evenimentului care este căutat
+* _detailed_: în cazul în care se dorește evenimentul detaliat, _detailed_ este adevărat, în caz contrar, are valoarea False.
+
+Toți parametri sunt validați în funcție de tipul de date cerut. Se iterează prin toate evenimentele salvate. În cazul în care este găsit un eveniment cu numele cerut, se verifică valoarea parametrului _detailed_. Dacă este True, este returnat evenimnetul alături de data de data și ora. Dacă este False, este returnat doar True. Dacă evenimentul nu este găsit, se returnează False.
+
+![get_event_graph.png](images/get_event_graph.drawio.png)
+
+---
+
+# Strategii de testare aplicate
+
+## Testare funcțională
+
+### 1. Partiționare în clase de echivalență 
+
+Exemplificăm partiționarea în clase de echivalență cu ajutorul metodei _add_event_.
+
+Domeniul de intrări:
+
+* _event_name_ - un șir de caractere **nevid**
+* _start_datetime_ - obiect de tip _datetime_, din **viitor**
+* _end_datetime_ - obiect de tip _datetime_, este necesar să fie după _start_datetime_
+
+Sunt analizate următoarele clase de echivalență:
+
+_event_name_:
+
+* N_1 = șir de caractere valid (nevid)
+* N_2 = șir de caractere vid
+* N_3 = tip de date invalid (int, None etc.)
+
+_start_datetime_:
+
+* S_1 = datetime valid, în viitor
+* S_2 = datetime în trecut
+* S_3 = tip de date invalid (str, int etc.)
+
+_end_datetime_:
+
+* E_1 = datetime valid, după start
+* E_2 = datetime invalid, înainte de start
+* E_3 = tip de date invalid (str, int etc.)
+
+
+Domeniul de ieșiri:
+
+* C_1 = True (evenimentul este adăugat)
+* C_2 = False (parametri sunt invalizi)
+
+Ilustrare test:
+
+```python
+
+@pytest.mark.parametrize("event_name, start_datetime, end_datetime, expected", [
+        ("Meeting", datetime.now() + timedelta(days=1), datetime.now() + timedelta(days=2), True),  # valid N_1, S_1, E_1 -> C_1
+        ("", datetime.now() + timedelta(days=1), datetime.now() + timedelta(days=2), False),  # event name empty N_2 -> C_2
+        (None, datetime.now() + timedelta(days=1), datetime.now() + timedelta(days=2), False),  # event name not str N_3 -> C_2
+        ("Test", "2024-01-01", datetime.now() + timedelta(days=2), False),  # start not datetime S_3 -> C_2
+        ("Test", datetime.now() + timedelta(days=2), datetime.now() + timedelta(days=1), False),  # end before start E_2 -> C_2
+        ("Test", datetime.now() - timedelta(days=1), datetime.now() + timedelta(days=1), False),  # start before present S_2 -> C_2
+        ("Test", datetime.now() + timedelta(days=1), "2024-01-01", False), # end not datetime E_3 -> C_2
+    ], ids=[
+        "valid_event",
+        "event_name_is_empty",
+        "event_name_not_string",
+        "start_not_datetime",
+        "end_before_start",
+        "start_before_nowtime",
+        "end_not_datetime"
+    ])
+    def test_add_event_equivalence(self, event_name, start_datetime, end_datetime, expected, event_manager_empty):
+        assert event_manager_empty.add_event(event_name, start_datetime, end_datetime) == expected
+```
 
 ### 2. Analiza valorilor de frontieră
 
-* Start == End
-* Range exact la limita evenimentelor
+Ilustrăm analiza valorilor de frontieră cu ajutorul metodei _get_events_in_range_.
 
+Lista evenimente conține un eveniment care începe la ora 10 și se termină la ora 12. Valorile de frontieră testate pot fi analizate în următorul tabel:
 
-Testele au ca scop atingerea tuturor ramurilor posibile de logică.
-
-## Exemplu de testare
+| Test                   | Descriere                                               | _range_start_              | _range_end_               | Rezultat |
+| ------------------------ | ------------------------------------------------------- |----------------------------|---------------------------|----------|
+| `equal_start_end_invalid` | start == end                                            | 2080-06-12 10:00           | 2080-06-12 10:00          | 0        |
+| `start_after_end_invalid` | start > end                                             | 2080-06-12 12:00           | 2080-06-12 11:59          | 0        |
+| `end_equals_event_start` | range se termină fix la începutul evenimentului         | 2080-06-12 08:00           | 2080-06-12 10:00          | 0        |
+| `start_equals_event_end` | range începe fix când se termină evenimentul            | 2080-06-12 12:00           | 2080-06-12 13:00          | 0        |
+| `exact_match`            | range = \[start, end] al evenimentului exact            | 2080-06-12 10:00           | 2080-06-12 12:00          | 1        |
+| `inside_event`           | interval complet în interiorul evenimentului            | 2080-06-12 10:00:00.000001 | 2080-06-12 10:00:00.000002 | 1        |
+| `partial_overlap_before` | începe înainte de eveniment și se termină la început    | 2080-06-12 09:59:59.999999 | 2080-06-12 10:00:00.000001 | 1        |
+| `partial_overlap_after`  | începe înainte de finalul evenimentului, terminare după | 2080-06-12 11:59:59.999999 | 2080-06-12 12:00:00.000001 | 1        |
 
 ```python
-def test_add_event_valid(event_manager_empty):
-    event_to_add = {
-        'name': 'name',
-        'start': datetime.now() + timedelta(days=1),
-        'end': datetime.now() + timedelta(days=2)
-    }
-    res = event_manager_empty.add_event(event_to_add['name'], event_to_add['start'], event_to_add['end'])
+@pytest.fixture
+def event_manager_one_event():
+    em = EventManager()
+    em.add_event("event1", datetime(2080, 6, 12, 10), datetime(2080, 6, 12, 12))
+    return em
 
-    assert res == True
+@pytest.mark.parametrize("range_start, range_end, expected", [
+        (datetime(2080, 6, 12, 10), datetime(2080, 6, 12, 10), 0), # invalid range_start == range_end
+        (datetime(2080, 6, 12, 12, 0), datetime(2080, 6, 12, 11, 59), 0), # invalid start > end 1 minute diff
+        (datetime(2080, 6, 12, 8, 0), datetime(2080, 6, 12, 10, 0), 0), # range end == event start no overlap
+        (datetime(2080, 6, 12, 12, 0), datetime(2080, 6, 12, 13, 0), 0), # range start == event end no overlap
+        (datetime(2080, 6, 12, 10, 0), datetime(2080, 6, 12, 12, 0), 1), #  range start end match event start end overlap
+        (datetime(2080, 6, 12, 10, 0, 0, 1), datetime(2080, 6, 12, 10, 0, 0, 2), 1), # during event overlap start_range 1 microsec after event start
+        (datetime(2080, 6, 12, 9, 59, 59, 999999), datetime(2080, 6, 12, 10, 0, 0, 1), 1), # partial overlap before
+        (datetime(2080, 6, 12, 11, 59, 59, 999999), datetime(2080, 6, 12, 12, 0, 0, 1), 1),  # partial overlap after
+    ], ids=[
+        "equal_start_end_invalid",
+        "start_after_end_invalid",
+        "end_equals_event_start",
+        "start_equals_event_end",
+        "exact_match",
+        "inside_event",
+        "partial_overlap_before",
+        "partial_overlap_after"
+    ])
+    def test_get_events_in_range_boundary(self, range_start, range_end, expected, event_manager_one_event):
+        result = event_manager_one_event.get_events_in_range(range_start, range_end)
+        assert len(result) == expected
 ```
+
+
+---
+
+## Testare structurală
+
+Pentru a exemplifica testarea stucturală, utilizăm metoda _get_event_.
+
+Testele scrise oferă acoperire 100% la nivel de condiții, decizii și instrucțiuni.
+
+```python
+
+    # event_name nu e str, asa ca tot if-ul devine True
+    def test_invalid_name_type(self, event_manager_one_event):
+        result = event_manager_one_event.get_event(123, True)
+        assert result is False
+
+    # detailed nu e bool, asa ca tot if-ul devine True
+    def test_invalid_detailed_type(self, event_manager_one_event):
+        result = event_manager_one_event.get_event("event1", "yes")
+        assert result is False
+
+    # evenimentul nu exisa, tot for-ul este executat
+    def test_event_not_found(self, event_manager_one_event):
+        result = event_manager_one_event.get_event("missing", False)
+        assert result is False
+
+    # eveniment gasit, detailed e false asa ca return True
+    def test_event_found_brief(self, event_manager_one_event):
+        result = event_manager_one_event.get_event("event1", False)
+        assert result is True
+
+    # eveniment gasit, detailed e True asa ca return event
+    def test_event_found_detailed(self, event_manager_one_event):
+        result = event_manager_one_event.get_event("event1", True)
+        assert isinstance(result, dict)
+        assert result["name"] == "event1"
+```
+
+**RAPORT COVERAGE**
+
+![img.png](images/coverage_report.png)
 
 ---
 
@@ -70,7 +268,7 @@ pip install pytest mutmut coverage
 pytest
 ```
 
-![img_1.png](images/img_1.png)
+![tests_passed.png](images/tests_passed.png)
 
 ---
 
@@ -98,21 +296,45 @@ mutmut run
 ```
 
 ### Rezultat:
+```bash
+⠹ Generating mutants
+    done in 1ms
+⠦ Listing all tests
+⠙ Running clean tests
+    done
+⠹ Running forced fail test
+    done
+Running mutation testing
+⠧ 44/44  🎉 44 🫥 0  ⏰ 0  🤔 0  🙁 0  🔇 0
+0.00 mutations/second
 
-![img.png](images/img.png)
+```
+
+Poate fi observat că au fost creați 44 de mutanți, iar testele au acoperit toți mutanții. 
+
+Prin _mutation testing_, codul clasei originale „suferă” mici modificări. În continuare, analizăm unul dintre mutanții creați pentru metoda _get_event_:
+
+![mutant_get_event.png](images/mutant_get_event.png)
+
+Putem observa că au fost creați opt mutanți.
+
+![mutant_get_event_8.png](images/mutant_get_event_8.png)
+
+Ultimul return din metoda originală este `return False` deoarece nu a fost găsit niciun eveniment cu acel nume. În mutant, acea ultimă instrucțiune este transformată în `return True`, iar mutantul este „omorât” de testul:  
+
+```python
+    def test_event_not_found(self, event_manager_one_event):
+        result = event_manager_one_event.get_event("missing", False)
+        assert result is False
+```
+deoarece ne asigurăm că răspunsul este unul negativ, nu pozitiv, în cazul în care nu este găsit un eveniment.
 
 ---
 
-## Diagramă clasă
 
-![code2flow_pxmJSB.png](images/code2flow_pxmJSB.png)
+## Raport AI
 
-A fost utilizat `code2flow` [4] pentru generarea diagramei.
----
 
-## Asistență AI
-
-A fost utilizat `ChatGPT` [5] pentru a oferi suport în construirea documentației.
 
 ---
 

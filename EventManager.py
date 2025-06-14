@@ -1,5 +1,6 @@
 from datetime import datetime
-from typing import List
+from typing import List, Union, Dict
+
 
 class EventManager:
     def __init__(self):
@@ -29,6 +30,7 @@ class EventManager:
                 range_start < range_end):
             return []
 
+
         events_in_range = []
         for event in self.events:
             if event['start'] < range_end and event['end'] > range_start:
@@ -45,4 +47,19 @@ class EventManager:
         for event in self.events:
             if event['start'] < end_datetime and event['end'] > start_datetime:
                 return True
+
         return False
+
+
+    def get_event(self, event_name: str, detailed: bool) -> Union[Dict, bool]:
+        if not (isinstance(event_name, str) and isinstance(detailed, bool)):
+            return False
+
+        for event in self.events:
+            if event['name'] == event_name:
+                if detailed:
+                    return event
+                else:
+                    return True
+        return False
+
