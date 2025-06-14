@@ -363,6 +363,26 @@ Metodele de testat nu sunt complicate, însă, în cazul unei metode mai complic
 
 Mai mult de atât, ChatGPT oferă o acoperire egală cu a noastră, printr-un număr mult mai mic de teste (16). Cu toate acestea, noi avem un număr ridicat de teste pentru scop didactic, pentru a avea acoperire completă la nivel de condiții și pentru a ilustra diferitele tipuri de testare în diferite cazuri. Desigur, tipul de testare utilizat poate fi ales în funcție de necesitățile clasei testate și de fluxul metodelor.
 
+## Configurație _hardware_ și _software_
+
+### 1. Configurație hardware
+
+* CPU: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
+* RAM: 32,0 GB
+
+### 2. Configurație software
+
+* IDE: PyCharm Professional 2024.3
+* Python 3.12.7
+
+Pentru o listă detailiată a bibliotecilor utilizate, alături de versiuni, vezi `requirements_ubuntu.txt` și `requirements_windows.txt`.
+
+### 3. Mașină virtuală
+
+Pentru a utiliza `mutmut`, am utilizat WSL cu distribuția `Ubuntu`.
+
+* Ubuntu 24.04.2 LTS
+* mutmut 3.2.3
 
 ## Referințe
 
